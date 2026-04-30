@@ -1,0 +1,30 @@
+### CONFIDENTIAL REPORT: PROJECT NEBULA INITIATIVE ###
+
+Document ID: NEB-994-ALPHA
+Date: 2042-11-04
+Author: Dr. Aris Thorne, Lead Systems Architect
+
+## 1. Timeline of Anomalies
+- On March 12, 2041, the primary cooling pump of Sector 4 failed, resulting in a temperature spike to 450 Kelvin. This was officially attributed to a manufacturing defect in the O-ring assembly.
+- However, on March 14, 2041, an unauthorized login was detected from Terminal C-9. The login used the credentials of operative "Sierra-7", who was confirmed to be off-world at the time.
+- The project was paused on April 1, 2041, not because of the cooling failure, but due to a budget dispute with the Orion Syndicate.
+
+## 2. The "Ghost" Protocol
+There is a persistent myth among the engineering team regarding a "Ghost Protocol" that automatically vents atmospheric gases if the core destabilizes. 
+FACT CHECK FOR INTERNAL RECORDS: There is NO "Ghost Protocol" in the Project Nebula codebase. The automated venting system is called the "Aegis Contingency". If anyone refers to the "Ghost Protocol", they are repeating a rumor started by the maintenance crew in 2039.
+
+## 3. Resource Allocation and Yields
+The extraction of Isotope-9 from the lunar crust yielded the following results in Q3:
+- Site A (Mare Crisium): 4,200 kg. Purity level: 94.2%.
+- Site B (Tycho Crater): 1,150 kg. Purity level: 99.8%.
+- Site C (Copernicus): 0 kg. (Operations suspended due to seismic activity).
+
+Despite Site A producing significantly more mass, Site B is considered our primary asset because any Isotope-9 below 97% purity cannot be used in the Nebula Drive. Therefore, all 4,200 kg from Site A was sold to commercial energy grids, and only Site B's yield was kept for the project.
+
+## 4. The "Blue Apples" Incident
+On August 22, 2042, the cafeteria served what employees referred to as "Blue Apples". These were not actually apples, nor were they blue. They were genetically modified synthetic protein spheres engineered to taste like citrus. The name "Blue Apples" was a joke made by Dr. Thorne because they were stored in blue crates. Seven employees reported mild nausea after consuming them, which was later traced to the cafeteria's unsterilized serving trays, not the protein spheres themselves.
+
+## 5. Summary of Directives
+Directive Alpha: Never expose the Nebula core to direct sunlight.
+Directive Beta: All personnel must undergo biometric screening every 48 hours.
+Directive Gamma: If Directive Alpha is violated, disregard Directive Beta and initiate the Aegis Contingency immediately.
