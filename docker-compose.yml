@@ -1,0 +1,71 @@
+# NimbusVPN production stack: the VPN control plane + data plane, behind Caddy (automatic HTTPS).
+#   cp .env.example .env   # then edit it
+#   docker compose up -d
+services:
+  nimbus:
+    build: .
+    image: nimbusvpn:latest
+    container_name: nimbusvpn
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NIMBUS_WG_BACKEND: linux
+      NIMBUS_DATA_DIR: /data
+      NIMBUS_RUNTIME_DIR: /run/nimbusvpn
+      NIMBUS_WAN_INTERFACE: eth0
+      # Only Caddy can reach port 8000 (it is not published), so trust its X-Forwarded-For.
+      FORWARDED_ALLOW_IPS: "*"
+    ports:
+      - "${NIMBUS_WG_PORT:-51820}:${NIMBUS_WG_PORT:-51820}/udp"
+    volumes:
+      - nimbus-data:/data
+    tmpfs:
+      # The rendered wg0.conf holds plaintext keys: keep it in memory, never on disk.
+      - /run/nimbusvpn:mode=0700,size=4m
+    cap_drop: [ALL]
+    cap_add: [NET_ADMIN, NET_RAW]
+    security_opt:
+      - no-new-privileges:true
+    sysctls:
+      net.ipv4.ip_forward: "1"
+      net.ipv4.conf.all.src_valid_mark: "1"
+      net.ipv6.conf.all.disable_ipv6: "0"
+      net.ipv6.conf.all.forwarding: "1"
+    networks: [backend]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: nimbusvpn-caddy
+    restart: unless-stopped
+    depends_on: [nimbus]
+    environment:
+      NIMBUS_DOMAIN: ${NIMBUS_DOMAIN:?set NIMBUS_DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt:
+      - no-new-privileges:true
+    networks: [backend]
+
+volumes:
+  nimbus-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  backend:
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+        - subnet: fd00:30::/64

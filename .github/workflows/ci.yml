@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install wireguard-tools (validates rendered configs and key derivation)
+        run: sudo apt-get update -q && sudo apt-get install -y -q wireguard-tools
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -p no:warnings
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t nimbusvpn:ci .
+      - name: Smoke test (dry-run backend)
+        run: |
+          docker run -d --name smoke -p 8000:8000 \
+            -e NIMBUS_SECRET_KEY="$(openssl rand -hex 32)" -e NIMBUS_WG_BACKEND=dryrun \
+            -e NIMBUS_ADMIN_USERNAME=admin -e NIMBUS_ADMIN_PASSWORD=ci-smoke-test-password \
+            nimbusvpn:ci
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:8000/api/health && exit 0; sleep 1; done
+          docker logs smoke; exit 1
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: deploy/terraform/aws
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck deploy/scripts/*.sh

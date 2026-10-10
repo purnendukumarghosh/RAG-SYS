@@ -1,0 +1,28 @@
+{
+	servers {
+		protocols h1 h2 h3
+	}
+}
+
+{$NIMBUS_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		-Server
+		-Via
+	}
+
+	request_body {
+		max_size 64KB
+	}
+
+	reverse_proxy nimbus:8000 {
+		header_up X-Real-IP {remote_host}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
