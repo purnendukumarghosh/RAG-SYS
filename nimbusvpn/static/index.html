@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NimbusVPN</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="NimbusVPN home">
+      <img src="/static/favicon.svg" alt="" width="28" height="28">
+      <span>Nimbus<strong>VPN</strong></span>
+    </a>
+    <nav id="nav" class="tabs" hidden>
+      <button type="button" data-view="devices" class="tab">Devices</button>
+      <button type="button" data-view="account" class="tab">Account</button>
+      <button type="button" data-view="users" class="tab admin-only">Users</button>
+      <button type="button" data-view="server" class="tab admin-only">Server</button>
+      <button type="button" data-view="audit" class="tab admin-only">Audit log</button>
+    </nav>
+    <div id="session" class="session" hidden>
+      <span id="whoami" class="muted"></span>
+      <button type="button" id="logout-btn" class="ghost">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Sign in -->
+    <section id="view-login" class="view">
+      <form id="login-form" class="card narrow" autocomplete="on">
+        <h1>Sign in</h1>
+        <p class="muted">Manage your secure WireGuard tunnels.</p>
+        <label>Username
+          <input name="username" autocomplete="username" required maxlength="64">
+        </label>
+        <label>Password
+          <input name="password" type="password" autocomplete="current-password" required maxlength="256">
+        </label>
+        <label id="totp-field" hidden>Two-factor code
+          <input name="totp_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}">
+        </label>
+        <p id="login-error" class="error" role="alert" hidden></p>
+        <button type="submit" class="primary wide">Sign in</button>
+      </form>
+    </section>
+
+    <!-- Devices -->
+    <section id="view-devices" class="view" hidden>
+      <div class="section-head">
+        <div>
+          <h2>Devices</h2>
+          <p class="muted">Each device is a WireGuard peer with its own keys and address.</p>
+        </div>
+        <div class="actions">
+          <label class="check admin-only"><input type="checkbox" id="devices-all"> All users</label>
+          <button type="button" id="add-device-btn" class="primary">Add device</button>
+        </div>
+      </div>
+      <div id="device-list" class="device-grid"></div>
+      <div id="devices-empty" class="empty card" hidden>
+        <h3>No devices yet</h3>
+        <p class="muted">Add a phone or laptop to get a WireGuard profile and QR code.</p>
+      </div>
+    </section>
+
+    <!-- Account -->
+    <section id="view-account" class="view" hidden>
+      <div class="section-head"><h2>Account</h2></div>
+      <div class="two-col">
+        <form id="password-form" class="card">
+          <h3>Change password</h3>
+          <label>Current password
+            <input name="current_password" type="password" autocomplete="current-password" required>
+          </label>
+          <label>New password
+            <input name="new_password" type="password" autocomplete="new-password" required minlength="12">
+          </label>
+          <p class="muted small">At least 12 characters. Changing it signs out your other sessions.</p>
+          <button type="submit" class="primary">Update password</button>
+        </form>
+        <div class="card">
+          <h3>Two-factor authentication</h3>
+          <div id="totp-off">
+            <p class="muted">Protect your account with an authenticator app (TOTP).</p>
+            <button type="button" id="totp-setup-btn" class="primary">Set up 2FA</button>
+          </div>
+          <form id="totp-enroll" hidden>
+            <p class="muted small">Scan with your authenticator app, then enter the 6-digit code.</p>
+            <img id="totp-qr" class="qr" alt="Two-factor QR code">
+            <p class="small">Manual key: <code id="totp-secret"></code></p>
+            <label>Code <input name="code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required></label>
+            <button type="submit" class="primary">Verify and enable</button>
+          </form>
+          <form id="totp-on" hidden>
+            <p><span class="pill ok">Enabled</span></p>
+            <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+            <label>Current code <input name="code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required></label>
+            <button type="submit" class="danger">Disable 2FA</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Users (admin) -->
+    <section id="view-users" class="view" hidden>
+      <div class="section-head"><h2>Users</h2></div>
+      <form id="user-form" class="card inline-form">
+        <label>Username <input name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.\-]+"></label>
+        <label>Initial password <input name="password" type="password" autocomplete="new-password" required minlength="12"></label>
+        <label>Role
+          <select name="role"><option value="user">User</option><option value="admin">Admin</option></select>
+        </label>
+        <label>Device limit <input name="max_devices" type="number" min="1" max="1000" placeholder="default"></label>
+        <button type="submit" class="primary">Create user</button>
+      </form>
+      <div class="table-wrap card">
+        <table>
+          <thead><tr><th>User</th><th>Role</th><th>Status</th><th>2FA</th><th>Devices</th><th>Last sign-in</th><th></th></tr></thead>
+          <tbody id="user-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Server (admin) -->
+    <section id="view-server" class="view" hidden>
+      <div class="section-head">
+        <h2>Server</h2>
+        <button type="button" id="sync-btn" class="ghost">Sync now</button>
+      </div>
+      <div id="server-stats" class="stat-row"></div>
+      <dl id="server-info" class="card kv"></dl>
+    </section>
+
+    <!-- Audit (admin) -->
+    <section id="view-audit" class="view" hidden>
+      <div class="section-head">
+        <h2>Audit log</h2>
+        <input id="audit-filter" type="search" placeholder="Filter by action, e.g. login" maxlength="48">
+      </div>
+      <div class="table-wrap card">
+        <table>
+          <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>IP</th><th>Details</th></tr></thead>
+          <tbody id="audit-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add device -->
+  <dialog id="add-device-dialog">
+    <form id="add-device-form" method="dialog">
+      <h3>Add device</h3>
+      <label>Name <input name="name" required maxlength="64" placeholder="e.g. Pixel 9 or work-laptop"></label>
+      <label>Access expires
+        <select name="expires_in_days">
+          <option value="">Never</option>
+          <option value="1">After 1 day</option>
+          <option value="7">After 7 days</option>
+          <option value="30">After 30 days</option>
+          <option value="90">After 90 days</option>
+          <option value="365">After 1 year</option>
+        </select>
+      </label>
+      <details>
+        <summary>Advanced: bring your own key</summary>
+        <label>Device public key
+          <input name="public_key" maxlength="44" placeholder="Output of: wg genkey | wg pubkey">
+        </label>
+        <p class="muted small">The private key then never leaves your device.</p>
+      </details>
+      <p class="error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" data-close>Cancel</button>
+        <button type="submit" class="primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Profile (shown once) -->
+  <dialog id="profile-dialog">
+    <div class="profile">
+      <h3 id="profile-title">Device profile</h3>
+      <p id="profile-warning" class="notice"></p>
+      <img id="profile-qr" class="qr" alt="WireGuard profile QR code">
+      <pre id="profile-config" class="config"></pre>
+      <div class="dialog-actions">
+        <button type="button" id="profile-copy" class="ghost">Copy</button>
+        <button type="button" id="profile-download" class="ghost">Download .conf</button>
+        <button type="button" class="primary" data-close>Done</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Generic prompt -->
+  <dialog id="ask-dialog">
+    <form method="dialog">
+      <h3 id="ask-title"></h3>
+      <label><span id="ask-label"></span> <input id="ask-input"></label>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" data-close>Cancel</button>
+        <button type="submit" class="primary" value="ok">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

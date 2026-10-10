@@ -1,0 +1,13 @@
+# cp terraform.tfvars.example terraform.tfvars, then edit.
+aws_region    = "ap-south-1"
+instance_type = "t3.micro"
+
+# Leave empty to use <ip>.sslip.io; or create an A record for your own domain.
+domain = ""
+
+# Optional SSH access for maintenance.
+# ssh_public_key    = "ssh-ed25519 AAAA... you@laptop"
+# ssh_allowed_cidrs = ["203.0.113.4/32"]
+
+# repo_url = "https://github.com/<you>/NimbusVPN.git"
+# repo_ref = "main"

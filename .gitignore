@@ -1,2 +1,32 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
 venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Runtime state and secrets
+.env
+data/
+*.db
+*.db-wal
+*.db-shm
+*.conf
+!deploy/**/*.conf
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

@@ -1,0 +1,22 @@
+#cloud-config
+# Rendered by Terraform. Installs NimbusVPN on first boot.
+package_update: true
+package_upgrade: true
+packages:
+  - git
+  - curl
+  - ca-certificates
+
+write_files:
+  - path: /root/nimbusvpn-bootstrap.env
+    permissions: "0600"
+    owner: root:root
+    content: |
+      NIMBUS_ADMIN_USERNAME=${admin_username}
+      NIMBUS_ADMIN_PASSWORD=${admin_password}
+      NIMBUS_WG_PORT=${wg_port}
+
+runcmd:
+  - [git, clone, --depth, "1", --branch, "${repo_ref}", "${repo_url}", /opt/nimbusvpn]
+  - [bash, -c, "set -a && . /root/nimbusvpn-bootstrap.env && set +a && /opt/nimbusvpn/deploy/scripts/install.sh --domain '${domain}' --harden"]
+  - [rm, -f, /root/nimbusvpn-bootstrap.env]
